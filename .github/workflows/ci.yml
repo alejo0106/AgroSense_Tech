@@ -60,8 +60,15 @@ jobs:
           name: coverage-xml-${{ matrix.python-version }}
           path: coverage.xml
 
-  coverage-merge:
-    name: Merge Coverage
+      - name: Upload raw coverage data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-data-${{ matrix.python-version }}
+          path: .coverage.${{ matrix.python-version }}
+
+  coverage-combine-raw:
+    name: Combine Raw Coverage
     runs-on: ubuntu-latest
     needs: [test]
     steps:
@@ -69,76 +76,39 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
-      - name: Download coverage data (3.11)
+            python-version: '3.11'
+      - name: Download raw coverage (3.11)
         uses: actions/download-artifact@v4
         with:
-          name: coverage-xml-3.11
-          path: cov/3.11
+          name: coverage-data-3.11
+          path: rawcov
         continue-on-error: true
-      - name: Download coverage data (3.12)
-        if: always()
+      - name: Download raw coverage (3.12)
         uses: actions/download-artifact@v4
         with:
-          name: coverage-xml-3.12
-          path: cov/3.12
+          name: coverage-data-3.12
+          path: rawcov
         continue-on-error: true
-      - name: Install coverage tool
+      - name: Combine coverage
         run: |
           python -m pip install --upgrade pip
           pip install coverage
-      - name: Merge coverage XMLs
-        run: |
-          python - << 'PY'
-import xml.etree.ElementTree as ET
-from pathlib import Path
-
-def merge_coverage_xml(paths, output):
-    trees = [ET.parse(p) for p in paths if Path(p).exists()]
-    if not trees:
-        raise SystemExit('No coverage XML files to merge')
-    # Start with first
-    base = trees[0]
-    base_root = base.getroot()
-    # Sum line-rate and branch-rate weighted by lines-valid (simple heuristic)
-    def parse_float(attr, default=0.0):
-        try:
-            return float(attr)
-        except Exception:
-            return default
-    total_lines = 0
-    weighted_line = 0.0
-    total_branches = 0
-    weighted_branch = 0.0
-    for t in trees:
-        r = t.getroot()
-        lv = int(r.get('lines-valid','0'))
-        lc = int(r.get('lines-covered','0'))
-        bv = int(r.get('branches-valid','0'))
-        bc = int(r.get('branches-covered','0'))
-        total_lines += lv
-        total_branches += bv
-        weighted_line += lc
-        weighted_branch += bc
-    if total_lines:
-        base_root.set('lines-covered', str(int(weighted_line)))
-        base_root.set('lines-valid', str(int(total_lines)))
-        base_root.set('line-rate', str(weighted_line/total_lines))
-    if total_branches:
-        base_root.set('branches-covered', str(int(weighted_branch)))
-        base_root.set('branches-valid', str(int(total_branches)))
-        base_root.set('branch-rate', str(weighted_branch/total_branches))
-    base.write(output)
-
-paths = [
-    'cov/3.11/coverage.xml',
-    'cov/3.12/coverage.xml',
-]
-merge_coverage_xml(paths, 'coverage-merged.xml')
-print('Merged coverage written to coverage-merged.xml')
-PY
-      - name: Upload merged coverage XML
+          ls -1 rawcov || true
+          # Rename to expected pattern if present
+          if [ -f rawcov/.coverage.3.11 ]; then cp rawcov/.coverage.3.11 .coverage.3.11; fi
+          if [ -f rawcov/.coverage.3.12 ]; then cp rawcov/.coverage.3.12 .coverage.3.12; fi
+          coverage combine || echo "No raw coverage files to combine"
+          coverage html || echo "HTML generation skipped"
+          coverage xml -o coverage-merged-raw.xml || echo "XML generation skipped"
+      - name: Upload merged raw HTML
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-xml-merged
-          path: coverage-merged.xml
+          name: coverage-html-merged-raw
+          path: htmlcov
+        continue-on-error: true
+      - name: Upload merged raw XML
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml-merged-raw
+          path: coverage-merged-raw.xml
+        continue-on-error: true
