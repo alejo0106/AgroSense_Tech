@@ -21,27 +21,31 @@ def process_data(sensor_data: List[Dict]) -> Dict:
 
     temperatures = [d.get("temperature", 0) for d in sensor_data]
     humidities = [d.get("humidity", 0) for d in sensor_data]
+    phs = [d.get("ph", 0) for d in sensor_data]
     lights = [d.get("light", 0) for d in sensor_data]
 
     avg_temp = round(mean(temperatures), 1)
     avg_humidity = round(mean(humidities), 1)
-    max_light = max(lights)
-    min_light = min(lights)
+    avg_ph = round(mean(phs), 2) if phs else 0
+    max_light = max(lights) if lights else 0
+    min_light = min(lights) if lights else 0
 
     metrics = {
         "avg_temp": avg_temp,
         "avg_humidity": avg_humidity,
+        "avg_ph": avg_ph,
         "max_light": max_light,
         "min_light": min_light,
     }
 
-    def make_nested(arr):
-        return {"avg": round(mean(arr), 1), "max": max(arr), "min": min(arr)}
+    def make_nested(arr, precision=1):
+        return {"avg": round(mean(arr), precision), "max": max(arr), "min": min(arr)}
 
     metrics["metrics"] = {
-        "temperature": make_nested(temperatures) if temperatures else {},
-        "humidity": make_nested(humidities) if humidities else {},
-        "light": make_nested(lights) if lights else {},
+        "temperature": make_nested(temperatures, 1) if temperatures else {},
+        "humidity": make_nested(humidities, 1) if humidities else {},
+        "ph": make_nested(phs, 2) if phs else {},
+        "light": make_nested(lights, 0) if lights else {},
     }
 
     return metrics
