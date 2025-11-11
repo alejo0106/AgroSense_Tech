@@ -45,6 +45,8 @@ jobs:
           python -c "import sys, pprint; print('Python path entries:'); pprint.pprint(sys.path)"
           ls -1
           pytest --cov=. --cov-report=term-missing --cov-report=xml --cov-report=html -q
+          # Save raw coverage data for merging
+          if [ -f .coverage ]; then mv .coverage .coverage.${{ matrix.python-version }}; fi
 
       - name: Upload coverage HTML
         uses: actions/upload-artifact@v4
@@ -57,3 +59,84 @@ jobs:
         with:
           name: coverage-xml-${{ matrix.python-version }}
           path: coverage.xml
+
+  coverage-merge:
+    name: Merge Coverage
+    runs-on: ubuntu-latest
+    needs: [test]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Download coverage data (3.11)
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-xml-3.11
+          path: cov/3.11
+      - name: Download coverage data (3.12)
+        if: always()
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-xml-3.12
+          path: cov/3.12
+      - name: Install coverage tool
+        run: |
+          python -m pip install --upgrade pip
+          pip install coverage
+      - name: Merge coverage XMLs
+        run: |
+          python - << 'PY'
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+def merge_coverage_xml(paths, output):
+    trees = [ET.parse(p) for p in paths if Path(p).exists()]
+    if not trees:
+        raise SystemExit('No coverage XML files to merge')
+    # Start with first
+    base = trees[0]
+    base_root = base.getroot()
+    # Sum line-rate and branch-rate weighted by lines-valid (simple heuristic)
+    def parse_float(attr, default=0.0):
+        try:
+            return float(attr)
+        except Exception:
+            return default
+    total_lines = 0
+    weighted_line = 0.0
+    total_branches = 0
+    weighted_branch = 0.0
+    for t in trees:
+        r = t.getroot()
+        lv = int(r.get('lines-valid','0'))
+        lc = int(r.get('lines-covered','0'))
+        bv = int(r.get('branches-valid','0'))
+        bc = int(r.get('branches-covered','0'))
+        total_lines += lv
+        total_branches += bv
+        weighted_line += lc
+        weighted_branch += bc
+    if total_lines:
+        base_root.set('lines-covered', str(int(weighted_line)))
+        base_root.set('lines-valid', str(int(total_lines)))
+        base_root.set('line-rate', str(weighted_line/total_lines))
+    if total_branches:
+        base_root.set('branches-covered', str(int(weighted_branch)))
+        base_root.set('branches-valid', str(int(total_branches)))
+        base_root.set('branch-rate', str(weighted_branch/total_branches))
+    base.write(output)
+
+paths = [
+    'cov/3.11/coverage.xml',
+    'cov/3.12/coverage.xml',
+]
+merge_coverage_xml(paths, 'coverage-merged.xml')
+print('Merged coverage written to coverage-merged.xml')
+PY
+      - name: Upload merged coverage XML
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml-merged
+          path: coverage-merged.xml
