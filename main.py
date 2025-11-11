@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from typing import Optional
 import sqlite3
@@ -21,6 +22,12 @@ def create_app() -> FastAPI:
 
 
 app = create_app()
+
+
+@app.get("/")
+async def root():
+    """Redirect root to the HTML dashboard view."""
+    return RedirectResponse(url="/dashboard/view")
 
 
 if __name__ == "__main__":
