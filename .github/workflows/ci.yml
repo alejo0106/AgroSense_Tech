@@ -30,9 +30,14 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; else pip install fastapi uvicorn pytest httpx sqlalchemy pydantic jinja2; fi
+          sudo apt-get update
+          # System packages for building psycopg2 if wheel is unavailable
+          sudo apt-get install -y --no-install-recommends libpq-dev gcc
+          python -m pip install --upgrade pip setuptools wheel
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; else pip install fastapi uvicorn pytest httpx sqlalchemy pydantic jinja2 psycopg2-binary python-dotenv; fi
 
       - name: Run tests
+        env:
+          PYTHONWARNINGS: default
         run: |
           pytest -q
