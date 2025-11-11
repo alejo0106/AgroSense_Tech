@@ -1,16 +1,12 @@
-from routers.analytics import process_data
+"""# cleanup: removed redundant test_pipeline.py
 
-def test_process_data_metrics():
-    """Verifica que el pipeline calcule correctamente las métricas básicas"""
-    sample_data = [
-        {"temperature": 25, "humidity": 60, "light": 400},
-        {"temperature": 27, "humidity": 65, "light": 420},
-        {"temperature": 26, "humidity": 63, "light": 410}
-    ]
+Este archivo era redundante (escenarios cubiertos por:
+- tests/test_unit/test_process_data.py
+- tests/test_integration/test_analytics_integration.py
+- tests/test_system/test_end_to_end.py)
 
-    result = process_data(sample_data)
+Se mantiene como placeholder por trazabilidad (no define tests).
+"""
 
-    assert "avg_temp" in result
-    assert round(result["avg_temp"], 1) == 26.0
-    assert result["max_light"] == 420
-    assert result["min_light"] == 400
+def test_placeholder_cleanup_pipeline():
+    assert True

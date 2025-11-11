@@ -25,4 +25,5 @@ async def get_dashboard(request: Request, db: Session = Depends(get_db)):
         # processed contains top-level aggregates and nested 'metrics'
         data = processed.get("metrics", {})
 
-    return templates.TemplateResponse("dashboard.html", {"request": request, "data": data})
+    # Starlette >=0.49 expects request as first argument
+    return templates.TemplateResponse(request, "dashboard.html", {"data": data})
