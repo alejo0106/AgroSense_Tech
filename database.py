@@ -34,10 +34,10 @@ def get_db() -> Generator[Session, None, None]:
 def get_connection():
     """Return a direct DB-API connection to Postgres using psycopg2.
 
-    This is a convenience for code that needs a raw connection (cursor) instead
-    of SQLAlchemy sessions. It reads the connection string from POSTGRES_DSN or
-    DATABASE_URL environment variables. Raise RuntimeError if psycopg2 is not
-    installed or no Postgres DSN is available.
+    This helper accepts either a full DATABASE_URL/POSTGRES_DSN (libpq URI)
+    or individual POSTGRES_* environment variables. It uses SQLAlchemy's URL
+    parser to robustly detect the driver. Returns a connection with
+    RealDictCursor for convenience.
     """
     try:
         import psycopg2
@@ -45,9 +45,27 @@ def get_connection():
     except Exception as exc:
         raise RuntimeError("psycopg2 is required for direct Postgres connections") from exc
 
+    # Prefer an explicit DSN env var, then DATABASE_URL
     dsn = os.getenv("POSTGRES_DSN") or os.getenv("DATABASE_URL")
-    if not dsn or "postgres" not in dsn:
-        raise RuntimeError("Postgres DSN not found in POSTGRES_DSN or DATABASE_URL")
 
-    # psycopg2 accepts libpq-style URIs like postgresql://user:pass@host:port/db
+    # If no DSN, try to build from individual env vars
+    if not dsn:
+        user = os.getenv("POSTGRES_USER")
+        password = os.getenv("POSTGRES_PASSWORD")
+        host = os.getenv("POSTGRES_HOST")
+        port = os.getenv("POSTGRES_PORT")
+        dbname = os.getenv("POSTGRES_DB")
+        if user and host and dbname:
+            # Build a libpq-style URI
+            auth = f"{user}:{password}@" if password else f"{user}@"
+            port_part = f":{port}" if port else ""
+            dsn = f"postgresql://{auth}{host}{port_part}/{dbname}"
+
+    if not dsn:
+        raise RuntimeError("Postgres DSN not found in POSTGRES_DSN/DATABASE_URL or POSTGRES_* env vars")
+
+    # Basic check for postgres scheme
+    if not dsn.startswith("postgres") and not dsn.startswith("postgresql"):
+        raise RuntimeError("Provided DSN does not appear to be Postgres")
+
     return psycopg2.connect(dsn, cursor_factory=RealDictCursor)
