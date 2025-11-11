@@ -1,0 +1,24 @@
+architecture-beta
+    title Arquitectura AgroSense_Tech
+
+    group user_side(cloud)[CLIENTES WEB]
+        service browser(internet)[Navegadores Web] in user_side
+    
+    group app_server(cloud)[SERVIDOR DE APLICACION]
+        
+        group web_server(server)[Servidor Web] in app_server
+            service flask_app(server)[Flask App] in web_server
+        
+        group database(database)[Base de Datos] in app_server
+            service postgres(database)[PostgreSQL] in database
+        
+        group frontend(disk)[Frontend] in app_server
+            service html_css(disk)[HTML/CSS] in frontend
+            service javascript(disk)[JavaScript] in frontend
+            service chartjs(disk)[Chart.js] in frontend
+
+    browser:R -- L:flask_app
+    flask_app:R -- L:postgres
+    flask_app:B -- T:html_css
+    html_css:B -- T:javascript
+    javascript:B -- T:chartjs
