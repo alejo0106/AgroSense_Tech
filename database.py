@@ -2,13 +2,22 @@ import os
 from typing import Generator
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
+from sqlalchemy.engine.url import make_url
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "agrosense.db")
 # Prefer DATABASE_URL (e.g. postgres://...) otherwise fallback to sqlite file
 DATABASE_URL = os.getenv("DATABASE_URL") or f"sqlite:///{DB_PATH}"
 
-# If using sqlite we need check_same_thread; otherwise pass no special connect_args
-connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+# Parse the DATABASE_URL to detect backend (robust vs startswith)
+try:
+    _parsed_url = make_url(DATABASE_URL)
+    _backend = _parsed_url.get_backend_name()
+except Exception:
+    _parsed_url = None
+    _backend = None
+
+# If using sqlite we need check_same_thread; otherwise no special connect_args
+connect_args = {"check_same_thread": False} if _backend == "sqlite" else {}
 
 # Create engine and session factory
 engine = create_engine(DATABASE_URL, connect_args=connect_args)
@@ -64,8 +73,14 @@ def get_connection():
     if not dsn:
         raise RuntimeError("Postgres DSN not found in POSTGRES_DSN/DATABASE_URL or POSTGRES_* env vars")
 
-    # Basic check for postgres scheme
-    if not dsn.startswith("postgres") and not dsn.startswith("postgresql"):
+    # Validate DSN scheme robustly using SQLAlchemy parser
+    try:
+        url = make_url(dsn)
+        backend = url.get_backend_name()
+    except Exception:
+        backend = None
+
+    if backend not in ("postgresql", "postgres"):
         raise RuntimeError("Provided DSN does not appear to be Postgres")
 
     return psycopg2.connect(dsn, cursor_factory=RealDictCursor)
