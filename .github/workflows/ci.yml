@@ -49,11 +49,11 @@ jobs:
       - name: Upload coverage HTML
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-html
+          name: coverage-html-${{ matrix.python-version }}
           path: htmlcov
 
       - name: Upload coverage XML
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-xml
+          name: coverage-xml-${{ matrix.python-version }}
           path: coverage.xml
