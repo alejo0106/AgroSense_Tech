@@ -4,6 +4,17 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
 from sqlalchemy.engine.url import make_url
 
+# Optional: load environment variables from a local .env file if python-dotenv is
+# installed. This makes it easy to put POSTGRES_* or DATABASE_URL into a
+# non-committed `.env` during local development without changing system env.
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except Exception:
+    # dotenv is optional; if not present we simply rely on existing env vars
+    pass
+
 DB_PATH = os.path.join(os.path.dirname(__file__), "agrosense.db")
 # Prefer DATABASE_URL (e.g. postgres://...) otherwise fallback to sqlite file
 DATABASE_URL = os.getenv("DATABASE_URL") or f"sqlite:///{DB_PATH}"
@@ -63,7 +74,7 @@ def get_connection():
     # If no DSN, try to build from individual env vars
     if not dsn:
         user = os.getenv("POSTGRES_USER")
-        password = os.getenv("POSTGRES_PASSWORD")
+        password = os.getenv("root")
         host = os.getenv("POSTGRES_HOST")
         port = os.getenv("POSTGRES_PORT")
         dbname = os.getenv("POSTGRES_DB")

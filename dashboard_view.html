@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgroSense Tech - Panel de Monitoreo</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root{
+            --bg:#f4f7fa;
+            --card:#ffffff;
+            --accent:#2b9348;
+            --muted:#6b7280;
+            --glass: rgba(255,255,255,0.6);
+        }
+        *{box-sizing:border-box}
+        body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background: linear-gradient(180deg,#f7fbf7 0%,var(--bg) 100%); margin: 0; color:#0f172a; }
+        header{display:flex;align-items:center;justify-content:space-between;padding:20px 28px;background:var(--card);box-shadow:0 6px 18px rgba(11,20,30,0.04)}
+        .brand{display:flex;gap:12px;align-items:center}
+        .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#55a630);display:flex;align-items:center;justify-content:center;color:white;font-weight:700}
+        h1{font-size:18px;margin:0}
+        .subtitle{color:var(--muted);font-size:13px}
+        .actions{display:flex;gap:12px;align-items:center}
+        .btn{background:var(--accent);color:white;padding:8px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:600}
+        .container{max-width:1200px;margin:26px auto;padding:0 18px}
+        .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:18px}
+        .kpi{background:var(--card);padding:16px;border-radius:12px;box-shadow:0 6px 18px rgba(11,20,30,0.04);display:flex;flex-direction:column;gap:8px}
+        .kpi .label{color:var(--muted);font-size:13px}
+        .kpi .value{font-size:22px;font-weight:700}
+        .charts{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+        .chart-card{background:var(--card);padding:16px;border-radius:12px;box-shadow:0 6px 18px rgba(11,20,30,0.04)}
+        footer{max-width:1200px;margin:18px auto;padding:8px 18px;color:var(--muted);font-size:13px}
+        @media(max-width:900px){.charts{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}}
+    </style>
+</head>
+<body>
+    <header>
+        <div class="brand">
+            <div class="logo">AS</div>
+            <div>
+                <h1>AgroSense Tech</h1>
+                <div class="subtitle">Panel de Monitoreo · Sensores agrícolas</div>
+            </div>
+        </div>
+        <div class="actions">
+            <div id="last-updated" class="subtitle">Última actualización: —</div>
+            <button class="btn" id="refresh">Actualizar</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="kpis">
+            <div class="kpi">
+                <div class="label">Temperatura (°C)</div>
+                <div class="value" id="kpi-temp">—</div>
+            </div>
+            <div class="kpi">
+                <div class="label">Humedad (%)</div>
+                <div class="value" id="kpi-hum">—</div>
+            </div>
+            <div class="kpi">
+                <div class="label">pH del suelo</div>
+                <div class="value" id="kpi-ph">—</div>
+            </div>
+            <div class="kpi">
+                <div class="label">Luz (lux)</div>
+                <div class="value" id="kpi-light">—</div>
+            </div>
+        </section>
+
+        <section class="charts">
+            <div class="chart-card"><div id="chart-temp" style="height:320px;"></div></div>
+            <div class="chart-card"><div id="chart-hum" style="height:320px;"></div></div>
+            <div class="chart-card"><div id="chart-ph" style="height:320px;"></div></div>
+            <div class="chart-card"><div id="chart-light" style="height:320px;"></div></div>
+        </section>
+    </main>
+
+    <footer>AgroSense Tech · Demo · Datos simulados</footer>
+
+    <script>
+        const refreshBtn = document.getElementById('refresh');
+        const lastUpdatedEl = document.getElementById('last-updated');
+
+        function safe(v, fallback='—'){ return (v === undefined || v === null) ? fallback : v }
+
+        async function loadData(){
+            try{
+                const res = await fetch('/analytics');
+                const data = await res.json();
+
+                const t = data?.temperature ?? {};
+                const h = data?.humidity ?? {};
+                const p = data?.ph ?? {};
+                const l = data?.light ?? {};
+
+                // KPIs
+                document.getElementById('kpi-temp').textContent = safe(t.avg, '—');
+                document.getElementById('kpi-hum').textContent = safe(h.avg, '—');
+                document.getElementById('kpi-ph').textContent = safe(p.avg, '—');
+                document.getElementById('kpi-light').textContent = safe(l.avg, '—');
+
+                // Charts
+                Plotly.react('chart-temp', [{ x:['Prom','Max','Min'], y:[safe(t.avg,0), safe(t.max,0), safe(t.min,0)], type:'bar', marker:{color:'#ff7b54'} }], {title:'Temperatura (°C)'});
+                Plotly.react('chart-hum', [{ x:['Prom','Max','Min'], y:[safe(h.avg,0), safe(h.max,0), safe(h.min,0)], type:'bar', marker:{color:'#38bdf8'} }], {title:'Humedad (%)'});
+                Plotly.react('chart-ph',  [{ x:['Prom','Max','Min'], y:[safe(p.avg,0), safe(p.max,0), safe(p.min,0)], type:'bar', marker:{color:'#a78bfa'} }], {title:'pH del Suelo'});
+                Plotly.react('chart-light',[{ x:['Prom','Max','Min'], y:[safe(l.avg,0), safe(l.max,0), safe(l.min,0)], type:'bar', marker:{color:'#fde68a'} }], {title:'Luz (lux)'});
+
+                lastUpdatedEl.textContent = 'Última actualización: ' + new Date().toLocaleString();
+            }catch(err){
+                console.error('Failed to load data', err);
+            }
+        }
+
+        refreshBtn.addEventListener('click', loadData);
+        // Initial load
+        loadData();
+        // Optional: refresh every 30s
+        // setInterval(loadData, 30000);
+    </script>
+</body>
+</html>
