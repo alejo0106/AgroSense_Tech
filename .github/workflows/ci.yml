@@ -41,12 +41,11 @@ jobs:
         env:
           PYTHONWARNINGS: default
           PYTHONPATH: ${{ github.workspace }}
+          COVERAGE_FILE: .coverage.${{ matrix.python-version }}
         run: |
           python -c "import sys, pprint; print('Python path entries:'); pprint.pprint(sys.path)"
           ls -1
           pytest --cov=. --cov-report=term-missing --cov-report=xml --cov-report=html -q
-          # Save raw coverage data for merging
-          if [ -f .coverage ]; then mv .coverage .coverage.${{ matrix.python-version }}; fi
 
       - name: Upload coverage HTML
         uses: actions/upload-artifact@v4
