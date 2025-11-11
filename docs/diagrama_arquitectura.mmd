@@ -1,0 +1,52 @@
+architecture-beta
+    group iot_devices(cloud)[DISPOSITIVOS IOT]
+        service sensores(internet)[Sensores Campo] in iot_devices
+
+    group aws(cloud)[AWS CLOUD]
+        
+        group aws_ingesta(cloud)[Ingesta de Datos] in aws
+            service iot_core(aws:arch-aws-iot-core)[IoT Core] in aws_ingesta
+            service kinesis(aws:arch-amazon-kinesis-data-streams)[Kinesis] in aws_ingesta
+        
+        group aws_procesamiento(cloud)[Procesamiento] in aws
+            service lambda_proc(aws:arch-aws-lambda)[Lambda Process] in aws_procesamiento
+            service sns(aws:arch-amazon-simple-notification-service)[SNS Alertas] in aws_procesamiento
+        
+        group aws_almacenamiento(cloud)[Almacenamiento] in aws
+            service timestream(aws:arch-amazon-timestream)[Timestream] in aws_almacenamiento
+            service dynamodb(aws:arch-amazon-dynamodb)[DynamoDB] in aws_almacenamiento
+            service s3(aws:arch-amazon-simple-storage-service)[S3 DataLake] in aws_almacenamiento
+        
+        group aws_analitica(cloud)[Analitica e IA] in aws
+            service sagemaker(aws:arch-amazon-sagemaker)[SageMaker] in aws_analitica
+        
+        group aws_seguridad(cloud)[Seguridad] in aws
+            service cognito(aws:arch-amazon-cognito)[Cognito] in aws_seguridad
+        
+        group aws_backend(cloud)[Backend API] in aws
+            service lambda_api(aws:arch-aws-lambda)[Lambda API] in aws_backend
+            service apigw(aws:arch-amazon-api-gateway)[API Gateway] in aws_backend
+        
+        group aws_frontend(cloud)[Frontend] in aws
+            service ecs(aws:arch-amazon-elastic-container-service)[ECS Fargate] in aws_frontend
+            service cloudfront(aws:arch-amazon-cloudfront)[CloudFront CDN] in aws_frontend
+
+    group clientes_web(cloud)[CLIENTES WEB]
+        service usuarios(internet)[Navegadores Web] in clientes_web
+
+    sensores:R -- L:iot_core
+    iot_core:R -- L:kinesis
+    kinesis:R -- L:lambda_proc
+    lambda_proc:R -- L:sns
+    lambda_proc:R -- L:timestream
+    lambda_proc:R -- L:dynamodb
+    lambda_proc:R -- L:s3
+    s3:R -- L:sagemaker
+    sagemaker:R -- L:lambda_api
+    timestream:R -- L:lambda_api
+    dynamodb:R -- L:lambda_api
+    lambda_api:R -- L:apigw
+    cognito:R -- L:apigw
+    apigw:R -- L:ecs
+    ecs:R -- L:cloudfront
+    cloudfront:R -- L:usuarios
