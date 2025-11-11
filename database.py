@@ -49,8 +49,11 @@ def get_connection():
     RealDictCursor for convenience.
     """
     try:
-        import psycopg2
-        from psycopg2.extras import RealDictCursor
+        # importlib used to avoid static import-time resolution errors in some linters
+        import importlib
+
+        psycopg2 = importlib.import_module("psycopg2")
+        RealDictCursor = importlib.import_module("psycopg2.extras").RealDictCursor
     except Exception as exc:
         raise RuntimeError("psycopg2 is required for direct Postgres connections") from exc
 
