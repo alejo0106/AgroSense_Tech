@@ -1,6 +1,7 @@
 architecture-beta
     group iot_devices(cloud)[DISPOSITIVOS IOT]
         service sensores(internet)[Sensores Campo] in iot_devices
+        service actuadores(internet)[Actuadores] in iot_devices
 
     group aws(cloud)[AWS CLOUD]
         
@@ -35,9 +36,10 @@ architecture-beta
         service usuarios(internet)[Navegadores Web] in clientes_web
 
     sensores:R -- L:iot_core
+    actuadores:R -- B:iot_core
     iot_core:R -- L:kinesis
     kinesis:R -- L:lambda_proc
-    lambda_proc:R -- L:sns
+    lambda_proc:R -- T:sns
     lambda_proc:R -- L:timestream
     lambda_proc:R -- L:dynamodb
     lambda_proc:R -- L:s3
