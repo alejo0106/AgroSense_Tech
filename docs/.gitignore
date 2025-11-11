@@ -1,0 +1,15 @@
+# LaTeX build output
+build/
+
+# Common LaTeX aux files
+*.aux
+*.bbl
+*.blg
+*.toc
+*.out
+*.lof
+*.lot
+*.log
+*.fls
+*.fdb_latexmk
+*.synctex.gz

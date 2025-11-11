@@ -1,0 +1,233 @@
+% Plan de Pruebas AgroSense Tech - IEEEtran
+\documentclass[conference]{IEEEtran}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{csquotes}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{longtable}
+\usepackage{graphicx}
+\usepackage{url}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{adjustbox}
+\pagestyle{empty}
+
+\hypersetup{colorlinks=true, linkcolor=black, citecolor=black, urlcolor=blue}
+
+\title{Reporte de pruebas: AgroSense Tech}
+\author{\IEEEauthorblockN{1\textsuperscript{st} Luis Alejandro Ojeda}
+\IEEEauthorblockA{\textit{Facultad de Ingenier\'ias} \\
+\textit{Universidad de San Buenaventura}\\
+Medell\'in, Colombia \\
+luis.ojeda222@tau.usbmed.edu.co}
+\and
+\IEEEauthorblockN{2\textsuperscript{nd} Alejandro Ramos Echeverry}
+\IEEEauthorblockA{\textit{Facultad de Ingenier\'ias} \\
+\textit{Universidad de San Buenaventura}\\
+Medell\'in, Colombia \\
+alejandro.ramos231@tau.usbmed.edu.co}}
+
+\begin{document}
+\maketitle
+
+% =============================
+% 1. Introducción y Contexto
+% =============================
+\section{Introducci\'on y Contexto}
+AgroSense Tech es una plataforma IoT inteligente para el monitoreo agr\'icola que integra captura de datos de sensores, anal\'itica de indicadores clave y visualizaci\'on mediante un dashboard web. El backend est\'a construido con FastAPI (Python), ORM con SQLAlchemy, base de datos PostgreSQL (con fallback a SQLite en pruebas), plantillas Jinja2 y visualizaci\'on de datos con Plotly en el cliente. La automatizaci\'on de calidad se implementa con \textit{pytest} y GitHub Actions (CI), logrando \textbf{91\%} de Test Coverage global sobre 26 pruebas implementadas al momento de este plan.
+
+El diagrama de arquitectura (archivo \texttt{docs/diagrama_arquitectura.mmd}) representa la extensi\'on proyectada hacia servicios tipo nube (AWS IoT Core, Lambda, Kinesis, SageMaker, Timestream, DynamoDB, CloudFront) para evoluciones futuras, garantizando escalabilidad y an\'alisis avanzado.
+
+Este Plan de Pruebas se alinea con los principios ISTQB, el proceso formal de prueba descrito en ISO/IEC 29119 y el modelo de calidad de producto ISO/IEC 25010.
+
+% =============================
+% 2. Alcance
+% =============================
+\section{Alcance}
+El alcance cubre los m\'odulos y componentes del backend actual y su extensibilidad proyectada:
+\begin{itemize}
+  \item \textbf{API de ingesta de sensores}: endpoint POST /sensor-data para registrar mediciones de humedad, temperatura y luz.
+  \item \textbf{Procesamiento anal\'itico y m\'etrico}: c\'alculo de agregaciones y estad\'isticos expuestos en /analytics.
+  \item \textbf{Dashboard visual}: plantilla HTML/Jinja2 servida en /dashboard/view y endpoint JSON de soporte.
+  \item \textbf{Capa de persistencia}: modelos SQLAlchemy y sesi\'on de base de datos, con soporte para PostgreSQL.
+  \item \textbf{Simulador IoT (planificado)}: generar datos sint\'eticos y cargas para pruebas de desempe\~no (a\'un no integrado en la suite final, marcado como pendiente en la planificaci\'on).
+\end{itemize}
+Fuera de alcance en este corte: pruebas de seguridad profunda (penetration), pruebas de rendimiento de carga masiva y pruebas de usabilidad con usuarios finales.
+
+% =============================
+% 3. Objetivos del Plan
+% =============================
+\section{Objetivos}
+Los objetivos principales son:
+\begin{enumerate}
+  \item Definir una estrategia sistem\'atica de pruebas alineada a ISO/IEC 29119 e ISTQB.
+  \item Asegurar la trazabilidad entre requisitos funcionales, atributos de calidad (ISO/IEC 25010) y casos de prueba.
+  \item Mantener y mejorar un Test Coverage \ensuremath{\geq} 80\% (actual: 91\%).
+  \item Establecer bases para la extensi\'on hacia pruebas no funcionales (rendimiento, escalabilidad, resiliencia) y el simulador IoT.
+\end{enumerate}
+
+% =============================
+% 4. Estrategia General
+% =============================
+\section{Estrategia General}
+La estrategia de prueba est\'a guiada por los principios ISTQB: enfoque en el riesgo, detecci\'on temprana de defectos, y revisi\'on continua.
+\subsection{Modelo de Proceso (ISO/IEC 29119)}
+Se adopta un ciclo iterativo: planificaci\'on, dise\~no, implementaci\'on, ejecuci\'on y evaluaci\'on. Cada iteraci\'on integra retroalimentaci\'on desde CI.
+\subsection{T\'ecnicas}
+\begin{itemize}
+  \item Caja Negra: validaci\'on de endpoints (equivalencia y valores l\'imite).
+  \item Caja Blanca: cobertura de funciones internas (helpers de base de datos, l\'ogica de agregaci\'on).
+  \item Basadas en Requisitos: mapeo de cada caso a funcionalidades clave (ingesta, m\'etricas, visualizaci\'on).
+  \item Exploratorias puntuales para detectar rutas de error no documentadas.
+\end{itemize}
+\subsection{Automatizaci\'on y CI}
+GitHub Actions ejecuta la matriz de Python (3.11, 3.12), produce artefactos de cobertura combinada y valida la integridad estructural.
+
+% =============================
+% 5. Tipos y Niveles de Prueba
+% =============================
+\section{Tipos y Niveles de Prueba}
+\begin{itemize}
+  \item \textbf{Unitarias}: funciones de procesamiento, validaci\'on de modelos, helpers de conexi\'on.
+  \item \textbf{Integraci\'on}: flujo API + capa de datos (consultas y respuestas JSON/HTML).
+  \item \textbf{Sistema}: escenarios extremo a extremo desde ingesta hasta an\'alisis agregado.
+  \item \textbf{Aceptaci\'on}: planificadas para iteraci\'on con stakeholders (pendientes formalizaci\'on).
+  \item \textbf{No funcionales (preparaci\'on)}: base para pruebas de rendimiento y escalabilidad con simulador IoT.
+\end{itemize}
+
+% =============================
+% 6. Criterios de Entrada y Salida
+% =============================
+\section{Criterios de Entrada y Salida}
+\subsection{Entrada}
+\begin{itemize}
+  \item Código fuente estable y compilable (FastAPI app sin errores de importaci\'on).
+  \item Configuraci\'on de entorno (.env y variables) y base de datos disponible.
+  \item Fixtures de prueba operativas (cliente HTTP, sesi\'on de DB).
+  \item Diagrama de arquitectura actualizado.
+\end{itemize}
+\subsection{Salida}
+\begin{itemize}
+  \item 100\% de casos planificados en el ciclo ejecutados.
+  \item Cobertura \ensuremath{\geq} 80\% (actual: 91\%).
+  \item Cero defectos cr\'iticos abiertos en ingesta, anal\'itica o dashboard.
+  \item Artefactos: reporte de cobertura, logs, resultados en CI.
+\end{itemize}
+
+% =============================
+% 7. Matriz de Planificación
+% =============================
+\section{Matriz de Planificaci\'on}
+La Tabla~\ref{tab:matriz-evolucion} muestra la evoluci\'on estimada desde el prototipo actual hacia el producto final.
+
+\begin{table}[h]
+\centering
+\caption{Matriz de Evoluci\'on de Pruebas (Actual vs Objetivo)}\label{tab:matriz-evolucion}
+\begin{adjustbox}{width=\columnwidth}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Categor\'ia} & \textbf{Actual} & \textbf{Objetivo Final} & \textbf{Brecha}\tabularnewline
+\midrule
+Casos implementados & 26 & 100 & 74 \\
+Cobertura global & 91\% & \(\geq 95\%\) & 4\% \\
+Pruebas rendimiento & Preparado infra & Escenarios carga + estrés & Dise\~no \& scripting \\
+Pruebas seguridad & B\'asicas (no foco) & OWASP / Hardening & An\'alisis \& tooling \\
+Simulador IoT & Pendiente & Integrado y metrificado & Desarrollo \\
+Migraciones (Alembic) & No aplicadas & Versionado de esquema & Configuraci\'on \\
+Aceptaci\'on formal & No ejecutada & Sesiones con usuarios & Planificaci\'on \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+% =============================
+% 8. Trazabilidad a ISO/IEC 25010
+% =============================
+\section{Trazabilidad a ISO/IEC 25010}
+La Tabla~\ref{tab:trazabilidad-25010} vincula atributos de calidad con tipos de prueba y evidencia.
+
+\begin{table}[h]
+\centering
+\caption{Trazabilidad Atributos ISO/IEC 25010} \label{tab:trazabilidad-25010}
+\begin{adjustbox}{width=\columnwidth}
+\begin{tabular}{lll}
+\toprule
+\textbf{Atributo} & \textbf{Cobertura de Prueba} & \textbf{Evidencia} \\
+\midrule
+Adecuaci\'on Funcional & Unitarias, Integraci\'on, Sistema & 26 casos exitosos \\
+Fiabilidad & Sistema, Integraci\'on & No fallos cr\'iticos \\
+Mantenibilidad & Unitarias, Estructura modular & Cobertura 91\%, routers aislados \\
+Portabilidad & Config proxies / DB fallback & Ejecuci\'on local CI (Linux) \\
+Eficiencia de Performance & Preparaci\'on (infra) & Pendiente simulador \\
+Seguridad & Validaciones b\'asicas & Endpoints controlados \\
+Compatibilidad & API REST estándar & Cliente HTTP reproducible \\
+Usabilidad (Dashboard) & Smoke manual / Render & Dashboard carga estable \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+% =============================
+% 9. Artefactos de Salida
+% =============================
+\section{Artefactos de Salida}
+\begin{itemize}
+  \item Reporte de cobertura combinado (HTML / XML / raw .coverage*).
+  \item Logs de ejecuci\'on de CI y artefactos por versi\'on de Python.
+  \item Scripts de seed y verificaci\'on: \texttt{seed\_db.py}, \texttt{verify\_connection.py}.
+  \item Plan y reporte t\'ecnico en LaTeX (\texttt{reporte\_pruebas.tex}, este plan).
+  \item Diagrama Mermaid (\texttt{diagrama_arquitectura.mmd}).
+\end{itemize}
+
+% =============================
+% 10. Cronograma y Responsables
+% =============================
+\section{Cronograma y Responsables}
+\begin{table}[h]
+\centering
+\caption{Cronograma Resumido}
+\begin{adjustbox}{width=\columnwidth}
+\begin{tabular}{lll}
+\toprule
+\textbf{Hito} & \textbf{Responsable} & \textbf{Estado} \\
+\midrule
+Dise\~no inicial pruebas & Equipo dev & Completado \\
+Implementaci\'on unit tests & Equipo dev & Completado \\
+Integraci\'on CI/CD & Equipo dev & Completado \\
+Plan formal (este documento) & Equipo dev & Completado \\
+Simulador IoT & Equipo dev & Pendiente \\
+Pruebas rendimiento & QA / Dev & Pendiente \\
+Aceptaci\'on usuarios & Stakeholders & Pendiente \\
+Hardening seguridad & DevOps & Pendiente \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+% =============================
+% 11. Conclusiones
+% =============================
+\section{Conclusiones}
+El estado actual del System Under Test (SUT) demuestra madurez funcional con 91\% de cobertura y ausencia de defectos cr\'iticos en flujos esenciales. La arquitectura modular (routers, modelos, capa de datos) facilita la extensibilidad y la mantenibilidad. La presente planificaci\'on establece la base para escalar hacia pruebas de desempe\~no, seguridad avanzada e integraci\'on plena del simulador IoT, alineando el ciclo de vida de calidad con ISO/IEC 29119 e interpretando resultados conforme al modelo de calidad ISO/IEC 25010, bajo pr\'acticas ISTQB.
+
+Pr\'oximos pasos priorizados: (i) integraci\'on del simulador IoT para pruebas de carga controlada; (ii) definici\'on de umbrales de performance (latencia, throughput); (iii) refuerzo de pruebas de seguridad (entrada maliciosa, inyecci\'on); (iv) elevaci\'on progresiva de cobertura hacia 95\%.
+
+% =============================
+% Referencias
+% =============================
+\section*{Referencias}
+\begin{thebibliography}{00}
+\bibitem{iso25010} ISO/IEC 25010:2011, \textit{Systems and software engineering — Systems and software Quality Requirements and Evaluation (SQuaRE) — System and software quality models}.
+\bibitem{iso29119} ISO/IEC/IEEE 29119:2013, \textit{Software and systems engineering — Software testing}.
+\bibitem{istqb} ISTQB\textregistered{} Foundation Level Syllabus v4.0.
+\bibitem{fastapi} FastAPI Documentation: \url{https://fastapi.tiangolo.com/}
+\bibitem{sqlalchemy} SQLAlchemy Documentation: \url{https://www.sqlalchemy.org/}
+\bibitem{pytest} Pytest Documentation: \url{https://docs.pytest.org/}
+\end{thebibliography}
+
+\end{document}
