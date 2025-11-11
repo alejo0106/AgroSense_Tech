@@ -15,11 +15,17 @@ from models import Sensor
 
 
 @pytest.fixture(scope="session")
-def test_db_dir() -> str:
-    """Directorio temporal para aislar cualquier archivo sqlite en caso de fallback."""
+def test_db_dir() -> Generator[str, None, None]:
+    """Directorio temporal para aislar cualquier archivo sqlite en caso de fallback.
+
+    Ajuste: se corrige la anotación de tipo (antes str, ahora Generator[str, None, None]) y se usa
+    try/finally para garantizar limpieza incluso ante fallos en las pruebas.
+    """
     tmp = tempfile.mkdtemp(prefix="agrosense_test_")
-    yield tmp
-    shutil.rmtree(tmp, ignore_errors=True)
+    try:
+        yield tmp
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
 
 
 @pytest.fixture(scope="function")
