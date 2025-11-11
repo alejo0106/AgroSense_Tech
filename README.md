@@ -1,5 +1,7 @@
 # AgroSense_Tech — Proyecto FastAPI (Resumen y guía)
 
+[![CI - pytest](https://github.com/alejo0106/AgroSense_Tech/actions/workflows/ci.yml/badge.svg)](https://github.com/alejo0106/AgroSense_Tech/actions/workflows/ci.yml)
+
 Este repositorio es una pequeña aplicación demo que simula ingestión de datos de sensores IoT agrícolas y presenta un dashboard con métricas agregadas.
 
 Este README está pensado para pegarse como contexto a otra instancia de ChatGPT o para compartir con un compañero; cubre TODO: estructura, endpoints, scripts, cómo ejecutar, qué cambié y notas de seguridad.

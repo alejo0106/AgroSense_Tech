@@ -1,6 +1,6 @@
-"""Pytest configuration and shared fixtures for AgroSense_Tech.
+"""Fixtures de Pytest para AgroSense_Tech.
 
-Organiza fixtures según buenas prácticas (ISO/IEC 29119 - preparación controlada, limpieza).
+Alineadas con ISO/IEC 29119: preparación controlada y limpieza consistente.
 """
 import os
 import shutil
@@ -16,11 +16,7 @@ from models import Sensor
 
 @pytest.fixture(scope="session")
 def test_db_dir() -> Generator[str, None, None]:
-    """Directorio temporal para aislar cualquier archivo sqlite en caso de fallback.
-
-    Ajuste: se corrige la anotación de tipo (antes str, ahora Generator[str, None, None]) y se usa
-    try/finally para garantizar limpieza incluso ante fallos en las pruebas.
-    """
+    """Directorio temporal para aislar cualquier archivo sqlite (fallback)."""
     tmp = tempfile.mkdtemp(prefix="agrosense_test_")
     try:
         yield tmp
