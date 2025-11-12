@@ -1,3 +1,11 @@
+"""
+Punto de entrada de la aplicación FastAPI.
+
+Relación con otros módulos:
+- Llama a `init_db()` (database.py) para crear tablas si no existen.
+- Registra routers: `sensors`, `analytics`, `dashboard`, `dashboard_html`.
+- Redirige la raíz `/` hacia la vista HTML del dashboard.
+"""
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from database import init_db
@@ -8,7 +16,7 @@ app = FastAPI(title="AgroSense Tech API")
 
 
 def create_app() -> FastAPI:
-    # Initialize DB and include routers
+    # Inicializa la BD y registra las rutas de la API y la vista HTML.
     init_db()
     app.include_router(sensors.router)
     app.include_router(dashboard.router)
@@ -22,12 +30,13 @@ app = create_app()
 
 @app.get("/")
 async def root():
-    """Redirect root to the HTML dashboard view."""
+    """Redirige la raíz a la vista HTML del dashboard (/dashboard/view)."""
     return RedirectResponse(url="/dashboard/view")
 
 
 if __name__ == "__main__":
     import uvicorn
 
+    # Arranque de desarrollo con recarga automática
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
 

@@ -18,6 +18,11 @@ from models import Sensor
 
 
 def make_sample(sensor_id: str, ts: datetime):
+    """Construye una instancia `Sensor` con valores aleatorios.
+
+    Relación con el bloque siguiente: estas instancias se agregan a la sesión
+    para insertar registros de ejemplo y visualizar métricas en el dashboard.
+    """
     return Sensor(
         sensor_id=sensor_id,
         temperature=round(random.uniform(15.0, 35.0), 1),
@@ -29,6 +34,7 @@ def make_sample(sensor_id: str, ts: datetime):
 
 
 def main():
+    """Crea la BD (si no existe) y agrega 5 lecturas de ejemplo."""
     init_db()
     session = SessionLocal()
     try:

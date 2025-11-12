@@ -1,3 +1,11 @@
+"""
+Endpoints y lógica de análisis: agrega métricas a partir de lecturas almacenadas.
+
+Relación con otros módulos:
+- Lee `models.Sensor` mediante una sesión de DB inyectada (`get_db`).
+- La función `process_data` es utilizada también por `dashboard.py` y
+    `dashboard_html.py` para unificar el cálculo de métricas.
+"""
 from statistics import mean
 from typing import List, Dict
 from fastapi import APIRouter, Depends
@@ -15,6 +23,10 @@ def process_data(sensor_data: List[Dict]) -> Dict:
     'temperature', 'humidity' y 'light'.
 
     Devuelve top-level avg/max/min y una clave `metrics` anidada para compatibilidad.
+
+        Relación con el bloque siguiente: se extraen listas por variable, se calculan
+        promedios y extremos; luego se monta un diccionario con estructura esperada
+        por `/analytics` y el dashboard HTML.
     """
     if not sensor_data:
         return {"error": "No hay datos disponibles"}
@@ -53,7 +65,12 @@ def process_data(sensor_data: List[Dict]) -> Dict:
 
 @router.get("/analytics")
 async def get_analytics(db: Session = Depends(get_db)):
-    """Return processed metrics for all sensor readings in the DB."""
+    """Devuelve métricas calculadas para todas las lecturas almacenadas.
+
+    Relación con el bloque siguiente: primero leemos todas las filas `Sensor`,
+    transformamos a una lista de dicts simples y llamamos a `process_data`.
+    Si no hay datos, devolvemos shapes vacíos para que el dashboard no falle.
+    """
     sensors = db.query(Sensor).all()
     readings = [
         {"temperature": s.temperature, "humidity": s.humidity, "ph": s.ph, "light": s.light}

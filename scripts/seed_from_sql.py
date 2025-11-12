@@ -22,6 +22,11 @@ from database import engine, init_db
 
 
 def main():
+    """Ejecuta el SQL de semilla en una transacción sobre la BD configurada.
+
+    Relación con el resto: este método permite reproducir un estado consistente
+    (DDL+DML) idéntico al que se describe en la evidencia/documentación.
+    """
     sql_path = os.path.join(os.path.dirname(__file__), "seed_data.sql")
     if not os.path.exists(sql_path):
         print("seed_data.sql not found at:", sql_path)

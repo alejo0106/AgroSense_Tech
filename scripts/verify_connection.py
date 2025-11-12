@@ -23,6 +23,7 @@ except Exception as exc:
 
 
 def main():
+    # Mostrar variables relevantes para diagnosticar la conexión efectiva
     print("DATABASE_URL env value:", os.getenv("DATABASE_URL"))
     print("POSTGRES_DSN env value:", os.getenv("POSTGRES_DSN"))
     print("POSTGRES_* env vars:")
@@ -35,7 +36,7 @@ def main():
     except Exception:
         print("Could not read engine.url")
 
-    # Try to infer backend from DATABASE_URL
+    # Inferir backend (postgresql/sqlite) a partir del DSN disponible
     dsn = os.getenv("POSTGRES_DSN") or os.getenv("DATABASE_URL")
     if not dsn:
         print("No explicit DSN found in env. The app will fallback to sqlite if no env is set.")

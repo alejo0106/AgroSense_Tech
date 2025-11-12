@@ -1,3 +1,21 @@
+"""
+Infraestructura de base de datos (SQLAlchemy + Postgres/SQLite)
+
+Relación con el resto del proyecto:
+- `models.py` define las entidades ORM y hereda de `Base` definida aquí.
+- Los routers usan `get_db()` (Dependency Injection de FastAPI) para obtener
+    una sesión de base de datos por request.
+- `init_db()` crea las tablas a partir de los modelos y se invoca desde `main.py`
+    al iniciar la aplicación.
+
+Selección del motor de base de datos:
+- En tiempo de importación resolvemos `DATABASE_URL` usando esta prioridad:
+    1) `POSTGRES_DSN` (DSN explícito) > 2) `DATABASE_URL` > 3) fallback SQLite.
+    Esto evita que, en entornos de prueba, se "autoconstruya" un DSN Postgres
+    inesperado cuando no hay `DATABASE_URL`.
+- Para conexiones directas (diagnóstico) `get_connection()` sí permite construir
+    un DSN a partir de `POSTGRES_*` si es necesario.
+"""
 import os
 from typing import Generator
 from sqlalchemy import create_engine
@@ -23,6 +41,8 @@ def build_postgres_dsn_from_parts() -> str | None:
     Returns a libpq URI in the form postgresql://user:pass@host:port/dbname or None
     if the required minimum variables are not present.
     """
+    # Este helper se usa en `get_connection()` (diagnóstico). No se usa para
+    # fijar `DATABASE_URL` en tiempo de importación para no sorprender a los tests.
     user = os.getenv("POSTGRES_USER")
     # Legacy behavior: some tests/scripts used env key 'root' for the password.
     # To preserve compatibility, prefer 'root' if present; otherwise fall back
@@ -59,16 +79,22 @@ except Exception:
     _parsed_url = None
     _backend = None
 
-# If using sqlite we need check_same_thread; otherwise no special connect_args
+# Si usamos SQLite necesitamos `check_same_thread=False` (uvicorn multiproceso)
+# Para Postgres no se requieren `connect_args` especiales.
 connect_args = {"check_same_thread": False} if _backend == "sqlite" else {}
 
-# Create engine and session factory
+# Crear el engine (conexión pool) y la factoría de sesiones.
 engine = create_engine(DATABASE_URL, connect_args=connect_args)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 Base = declarative_base()
 
 
 def init_db() -> None:
+    """Crea las tablas a partir de los modelos declarados en `models.py`.
+
+    Importamos dentro de la función para registrar los modelos en `Base`
+    antes de ejecutar `create_all`.
+    """
     # Import models here to ensure they are registered on Base before create_all
     from models import Sensor  # noqa: F401
 
@@ -76,6 +102,7 @@ def init_db() -> None:
 
 
 def get_db() -> Generator[Session, None, None]:
+    """Dependency de FastAPI: abre una sesión por request y la cierra al final."""
     db = SessionLocal()
     try:
         yield db
@@ -98,6 +125,7 @@ def get_connection():
     except Exception as exc:
         raise RuntimeError("psycopg2 is required for direct Postgres connections") from exc
 
+    # Para diagnóstico aceptamos: POSTGRES_DSN > DATABASE_URL > construir desde POSTGRES_*.
     dsn = os.getenv("POSTGRES_DSN") or os.getenv("DATABASE_URL") or build_postgres_dsn_from_parts()
     if not dsn:
         raise RuntimeError("Postgres DSN not found. Set POSTGRES_* or DATABASE_URL/POSTGRES_DSN.")

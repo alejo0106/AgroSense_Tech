@@ -35,6 +35,7 @@
     </style>
 </head>
 <body>
+    <!-- Encabezado con branding y acción de refresco -->
     <header>
         <div class="brand">
             <div class="logo">AS</div>
@@ -49,8 +50,10 @@
         </div>
     </header>
 
+    <!-- Contenido principal: KPIs arriba, gráficos abajo. Los datos provienen de /analytics -->
     <main class="container">
-        <section class="kpis">
+    <!-- KPI principales calculados en analytics.process_data() -->
+    <section class="kpis">
             <div class="kpi">
                 <div class="label">Temperatura (°C)</div>
                 <div class="value" id="kpi-temp">—</div>
@@ -69,7 +72,8 @@
             </div>
         </section>
 
-        <section class="charts">
+    <!-- Gráficos de barras alimentados con los mismos datos del endpoint /analytics -->
+    <section class="charts">
             <div class="chart-card"><div id="chart-temp" style="height:320px;"></div></div>
             <div class="chart-card"><div id="chart-hum" style="height:320px;"></div></div>
             <div class="chart-card"><div id="chart-ph" style="height:320px;"></div></div>
@@ -85,9 +89,10 @@
 
         function safe(v, fallback='—'){ return (v === undefined || v === null) ? fallback : v }
 
-        async function loadData(){
+    // Obtiene JSON de /analytics y actualiza KPIs + gráficos.
+    async function loadData(){
             try{
-                const res = await fetch('/analytics');
+                const res = await fetch('/analytics'); // FastAPI -> routers/analytics.py
                 const data = await res.json();
 
                 const t = data?.temperature ?? {};
@@ -95,13 +100,13 @@
                 const p = data?.ph ?? {};
                 const l = data?.light ?? {};
 
-                // KPIs
+                // KPIs: promedios directos en tarjeta
                 document.getElementById('kpi-temp').textContent = safe(t.avg, '—');
                 document.getElementById('kpi-hum').textContent = safe(h.avg, '—');
                 document.getElementById('kpi-ph').textContent = safe(p.avg, '—');
                 document.getElementById('kpi-light').textContent = safe(l.avg, '—');
 
-                // Charts
+                // Charts: barras simples Prom/Max/Min por variable
                 Plotly.react('chart-temp', [{ x:['Prom','Max','Min'], y:[safe(t.avg,0), safe(t.max,0), safe(t.min,0)], type:'bar', marker:{color:'#ff7b54'} }], {title:'Temperatura (°C)'});
                 Plotly.react('chart-hum', [{ x:['Prom','Max','Min'], y:[safe(h.avg,0), safe(h.max,0), safe(h.min,0)], type:'bar', marker:{color:'#38bdf8'} }], {title:'Humedad (%)'});
                 Plotly.react('chart-ph',  [{ x:['Prom','Max','Min'], y:[safe(p.avg,0), safe(p.max,0), safe(p.min,0)], type:'bar', marker:{color:'#a78bfa'} }], {title:'pH del Suelo'});
@@ -114,7 +119,7 @@
         }
 
         refreshBtn.addEventListener('click', loadData);
-        // Initial load
+    // Carga inicial y botón de refresco manual
         loadData();
         // Optional: refresh every 30s
         // setInterval(loadData, 30000);
