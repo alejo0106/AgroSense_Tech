@@ -1,9 +1,5 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import RedirectResponse
-from pydantic import BaseModel
-from typing import Optional
-import sqlite3
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 from database import init_db
 from routers import sensors, dashboard, analytics, dashboard_html
 

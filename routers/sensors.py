@@ -9,7 +9,7 @@ router = APIRouter()
 
 @router.post("/sensor-data")
 async def receive_sensor(data: SensorCreate, db: Session = Depends(get_db)):
-    """Receive sensor JSON and persist to SQLite via SQLAlchemy."""
+    """Receive sensor JSON and persist to the configured database via SQLAlchemy."""
     ts = data.timestamp if data.timestamp else datetime.now(timezone.utc)
     sensor = Sensor(
         sensor_id=data.sensor_id,

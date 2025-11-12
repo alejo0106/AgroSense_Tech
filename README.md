@@ -19,6 +19,72 @@ Estado actual (local): conectada a Postgres en `localhost:5433` (usuario `postgr
 
 ---
 
+## Guía de presentación (orden recomendado)
+
+El orden más rápido y claro para mostrar al profesor (elige A o B):
+
+1) Base de datos y app
+- Opción A (Docker, recomendado):
+  ```powershell
+  docker compose up -d --build
+  ```
+- Opción B (Local):
+  ```powershell
+  python -m venv .venv
+  ./.venv/Scripts/Activate.ps1
+  pip install -r requirements.txt
+  # Crear .env a partir de .env.example o exportar variables POSTGRES_*
+  python scripts\verify_connection.py
+  python -m uvicorn main:app --reload
+  ```
+
+2) Sembrar datos (para que el dashboard muestre métricas)
+- Docker:
+  ```powershell
+  docker compose exec app python scripts/seed_from_sql.py
+  ```
+- Local:
+  ```powershell
+  python scripts\seed_from_sql.py
+  ```
+
+3) Mostrar el dashboard y los endpoints
+- Abrir Dashboard: http://127.0.0.1:8000/dashboard/view
+- Ver JSON de métricas: http://127.0.0.1:8000/analytics
+- (Opcional) Enviar una lectura de ejemplo:
+  ```powershell
+  $body = @{ sensor_id='demo-1'; temperature=24.5; humidity=68.2; ph=6.8; light=420 } | ConvertTo-Json
+  Invoke-RestMethod -Uri http://127.0.0.1:8000/sensor-data -Method POST -Body $body -ContentType 'application/json'
+  ```
+
+4) Ejecutar los tests
+- Docker:
+  ```powershell
+  docker compose exec app pytest -q
+  ```
+- Local:
+  ```powershell
+  python -m pytest -q
+  ```
+
+5) Evidencias (opcional)
+- Ver logs de la app (Docker):
+  ```powershell
+  docker compose logs -f app
+  ```
+- Guardar dashboard como HTML estático:
+  ```powershell
+  python -c "import sys, os; sys.path.insert(0, r'.'); from fastapi.testclient import TestClient; from main import app; client = TestClient(app); open('dashboard_view.html','w',encoding='utf8').write(client.get('/dashboard/view').text)"
+  ```
+
+Problemas comunes (y solución rápida)
+- “pytest no se reconoce”: usa `python -m pytest -q`.
+- Error de conexión Postgres: ejecuta `python scripts\verify_connection.py` o usa Docker (`docker compose up -d`).
+- Puerto ocupado (8000): cierra procesos anteriores o cambia a `--port 8001`.
+- psycopg2 no instalado: `pip install -r requirements.txt`.
+
+---
+
 ## Estructura del proyecto (archivos importantes)
 
 - `main.py` — crea la app, inicializa la BD y registra routers. Redirige `/` → `/dashboard/view`.
@@ -64,13 +130,22 @@ Ejemplo de salida de `/analytics` (formato):
 
 ## Cómo configurar y ejecutar (PowerShell, Windows)
 
-1) Instalar dependencias:
+### Opción A: Entorno local
+
+1) (Opcional) Crear y activar entorno virtual:
+
+```powershell
+python -m venv .venv
+./.venv/Scripts/Activate.ps1
+```
+
+2) Instalar dependencias:
 
 ```powershell
 pip install -r requirements.txt
 ```
 
-2) Configurar la conexión a Postgres. Puedes crear un archivo `.env` en la raíz (NO lo subas al repo). Ejemplo (rellena con tus valores):
+3) Configurar la conexión a Postgres. Puedes crear un archivo `.env` en la raíz (NO lo subas al repo). Ejemplo (rellena con tus valores):
 
 ```
 DATABASE_URL=postgresql://<USER>:<PASSWORD>@<HOST>:<PORT>/<DB_NAME>
@@ -92,7 +167,7 @@ $env:POSTGRES_PORT='5433'
 $env:POSTGRES_DB='AgroSense_Tech'
 ```
 
-3) Verificar la conexión (recomendado):
+4) Verificar la conexión (recomendado):
 
 ```powershell
 python scripts\verify_connection.py
@@ -100,7 +175,7 @@ python scripts\verify_connection.py
 
 Salida esperada: imprimirá `DATABASE_URL`, `engine.url`, `Inferred backend: postgresql` y `Connected to Postgres OK.` si la conexión es correcta.
 
-4) Sembrar datos (si quieres usar los datos exactos suministrados):
+5) Sembrar datos (si quieres usar los datos exactos suministrados):
 
 ```powershell
 python scripts\seed_from_sql.py
@@ -108,7 +183,7 @@ python scripts\seed_from_sql.py
 
 Salida esperada: `Seed SQL executed successfully.`
 
-5) Ejecutar la app:
+6) Ejecutar la app:
 
 ```powershell
 python -m uvicorn main:app --reload
@@ -119,13 +194,58 @@ Abrir:
 - HTML: http://127.0.0.1:8000/dashboard/view
 - JSON métricas: http://127.0.0.1:8000/analytics
 
-6) Correr tests:
+7) Correr tests:
 
 ```powershell
 pytest -q
 ```
 
 ---
+
+### Opción B: Docker / docker-compose (recomendado para entorno consistente)
+
+Requisitos: Docker Desktop instalado y en ejecución.
+
+1) Copia `.env.example` a `.env` si quieres personalizar usuario/contraseña/DB.
+2) Levanta los servicios (Postgres + app FastAPI):
+
+```powershell
+docker compose up -d --build
+```
+
+Esto inicia:
+- Postgres en el puerto local `5433` mapeado al `5432` del contenedor.
+- FastAPI en `http://localhost:8000` usando la variable `DATABASE_URL` apuntando al hostname `db`.
+
+3) Ver logs de la aplicación:
+
+```powershell
+docker compose logs -f app
+```
+
+4) Ejecutar tests dentro del contenedor (rápido, sin instalar nada local):
+
+```powershell
+docker compose exec app pytest -q
+```
+
+5) Sembrar datos dentro del contenedor:
+
+```powershell
+docker compose exec app python scripts/seed_from_sql.py
+```
+
+6) Verificar conexión dentro del contenedor:
+
+```powershell
+docker compose exec app python scripts/verify_connection.py
+```
+
+Para apagar y eliminar contenedores:
+
+```powershell
+docker compose down
+```
 
 ### Comandos rápidos (PowerShell) — qué ejecutan
 
@@ -225,5 +345,5 @@ Si quieres, genero ahora un `CHANGELOG.md` con los commits realizados durante es
 
 ---
 
-Fecha del documento: 2025-11-10
+Fecha del documento: 2025-11-12 (actualizado con Docker y mejoras de conexión Postgres)
 # AgroSense_Tech

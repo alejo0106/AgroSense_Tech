@@ -10,6 +10,9 @@ attempts to open a direct connection using `get_connection()` from `database.py`
 import sys
 import os
 
+# Ensure project root is importable when running this script directly
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+
 from sqlalchemy.engine.url import make_url
 
 try:
