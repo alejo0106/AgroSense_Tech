@@ -1,0 +1,91 @@
+% Contexto y Requerimientos AgroSense Tech - IEEEtran
+\documentclass[conference]{IEEEtran}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{adjustbox}
+\usepackage{xcolor}
+\usepackage{microtype}
+
+\title{Contexto, Buyer Persona y Requerimientos Técnicos del Proyecto AgroSense Tech}
+\author{
+\IEEEauthorblockN{Alejandro Ramos Echeverry, Luis Alejandro Ojeda Rojas}
+\IEEEauthorblockA{\textit{Facultad de Ingenierías} \\
+\textit{Universidad de San Buenaventura, Medellín, Colombia} \\
+\texttt{alejandro.ramos231@tau.usbmed.edu.co}, \texttt{luis.ojeda222@tau.usbmed.edu.co}}
+}
+
+\begin{document}
+\maketitle
+\pagestyle{empty}
+
+% =============================
+% 1. Descripción del Producto
+% =============================
+\section{Descripción del Producto}
+\textbf{AgroSense Tech} es una plataforma IoT para la gestión inteligente de viveros agrícolas.  
+Permite el monitoreo, control y análisis en tiempo real de variables como temperatura, humedad, luz y pH mediante sensores conectados a una red IoT.  
+Los datos son procesados a través de una \textit{data pipeline} que almacena, transforma y analiza la información para ser visualizada en un dashboard de inteligencia de negocios (BI), con alertas automáticas y análisis predictivo basados en métricas clave del cultivo.
+
+% =============================
+% 2. Buyer Persona
+% =============================
+\section{Buyer Persona}
+El cliente ideal es un administrador de vivero o productor agrícola de mediana o gran escala, con conocimientos básicos en tecnología, que busca optimizar el uso de recursos, reducir pérdidas y aumentar la productividad mediante herramientas digitales accesibles y analíticas.
+
+% =============================
+% 3. Objetivo del Sistema
+% =============================
+\section{Objetivo del Sistema}
+Desarrollar una solución integral que combine sensorización IoT, procesamiento de datos en tiempo real, análisis visual interactivo y automatización de pruebas de software bajo estándares internacionales de calidad (ISO/IEC 25010, ISO/IEC 29119 e ISTQB).
+
+% =============================
+% 4. Requerimientos Técnicos
+% =============================
+\section{Requerimientos Técnicos}
+\subsection{Herramientas}
+\begin{itemize}
+  \item \textbf{Backend y API:} FastAPI (servicios REST: /sensor-data, /analytics, /dashboard/view), Python 3.11/3.12, Pydantic, Jinja2, estructura modular con routers y modelos.
+  \item \textbf{Datos y persistencia:} SQLAlchemy (ORM y sesión de base de datos), PostgreSQL (motor principal), SQLite (modo prueba), helpers de conexión.
+  \item \textbf{Pruebas y calidad:} pytest + pytest-cov (unitarias, integración, sistema/E2E), fixtures, niveles ISTQB (unit, integration, system, acceptance), trazabilidad ISO/IEC 29119-3.
+  \item \textbf{CI/CD y automatización:} GitHub Actions (matriz Python 3.11/3.12), validaciones de cobertura y artefactos HTML.
+  \item \textbf{Documentación técnica:} LaTeX (IEEEtran), paquetes: hyperref, booktabs, tabularx, adjustbox, microtype, xcolor.
+  \item \textbf{Diagramas y arquitectura:} Mermaid (.mmd) para representar componentes, flujos y servicios (diagrama\_arquitectura.mmd, web\_application\_architecture.mmd).
+  \item \textbf{Entorno de desarrollo:} VS Code, PowerShell, Overleaf, requirements.txt.
+\end{itemize}
+
+\subsection{Conceptos}
+\begin{itemize}
+  \item Diseño de bases de datos relacionales.
+  \item Procesamiento de datos IoT en tiempo real.
+  \item Pruebas unitarias, funcionales e integración.
+  \item Ingeniería de software bajo ISO/IEC 25010 e ISO/IEC 29119.
+  \item Automatización de pruebas con Pytest y CI/CD.
+  \item Renderización dinámica con plantillas Jinja2.
+  \item Criterios de entrada, salida y suspensión según ISO/IEC 29119.
+  \item Evidencia objetiva de calidad (cobertura, CI/CD, resultados de pruebas).
+\end{itemize}
+
+% =============================
+% 5. Estándares y Referencias
+% =============================
+\section{Estándares y Referencias}
+El proyecto se rige por los siguientes estándares internacionales:
+\begin{itemize}
+  \item \textbf{ISO/IEC 25010:2011} — Modelo de calidad de producto y software.
+  \item \textbf{ISO/IEC 29119:2013} — Ingeniería del software — Pruebas de software.
+  \item \textbf{ISTQB® Foundation Level v4.0} — Técnicas y niveles de prueba.
+  \item \textbf{IEEEtran} — Formato para reportes técnicos y académicos.
+\end{itemize}
+
+% =============================
+% 6. Conclusión
+% =============================
+\section{Conclusión}
+Este documento complementa el plan y reporte de pruebas de \textbf{AgroSense Tech}, estableciendo el contexto del producto, su usuario objetivo y la infraestructura tecnológica empleada.  
+Proporciona la base conceptual y técnica para la verificación de calidad del software, la trazabilidad de los requisitos y la aplicación de buenas prácticas en ingeniería de datos e IoT bajo normas internacionales.
+
+\end{document}

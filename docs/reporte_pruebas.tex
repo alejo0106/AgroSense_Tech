@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 % Compilable on Overleaf (pdfLaTeX) — IEEEtran format
 \documentclass[conference]{IEEEtran}
 
@@ -18,21 +17,28 @@
 \usepackage{multirow}
 \usepackage{url}
 
+% Prevent table overflow
+\usepackage{adjustbox}
+
 % For symbols and better spacing
 \usepackage{microtype}
+
+% Precise float placement and float barriers
+\usepackage{float}
+\usepackage{placeins}
 
 \title{Reporte de pruebas: AgroSense Tech}
 
 \author{\IEEEauthorblockN{1\textsuperscript{st} Luis Alejandro Ojeda}
-\IEEEauthorblockA{\textit{Facultad de ingenier\'ias.} \\
-	extit{Universidad de San Buenaventura}\\
-Medellin, Colombia \\
+\IEEEauthorblockA{\textit{Facultad de Ingenier\'ias} \\
+  	extit{Universidad de San Buenaventura}\\
+Medell\'in, Colombia \\
 luis.ojeda222@tau.usbmed.edu.co}
 \and
 \IEEEauthorblockN{2\textsuperscript{nd} Alejandro Ramos Echeverry}
-\IEEEauthorblockA{\textit{Facultad de ingenier\'ias.} \\
-	extit{Universidad de San Buenaventura.}\\
-Medellin, Colombia \\
+\IEEEauthorblockA{\textit{Facultad de Ingenier\'ias} \\
+  	extit{Universidad de San Buenaventura}\\
+Medell\'in, Colombia \\
 alejandro.ramos231@tau.usbmed.edu.co}
 }
 
@@ -52,11 +58,21 @@ This document presents the professional software testing report for the AgroSens
 Este documento presenta el reporte profesional de pruebas de software del proyecto AgroSense\_Tech, una aplicaci\'on FastAPI con capacidades IoT para sensado y anal\'itica en agricultura. El proceso de pruebas se bas\'o en ISTQB y se aline\'o al est\'andar ISO/IEC 29119, mientras que la interpretaci\'on de resultados se mape\'o a los atributos de calidad del modelo ISO/IEC 25010. Se implement\'o una bater\'ia multi-nivel (unitarias, integraci\'on y sistema) que cubre acceso a datos (SQLAlchemy/PostgreSQL), endpoints de API, consistencia de anal\'iticas y render del dashboard. La integraci\'on continua ejecuta la matriz de pruebas y agrega la cobertura. La cobertura final alcanzada es 91\% a nivel global, sin fallos cr\'iticos en 26 pruebas automatizadas. El reporte resume plan, estrategia, evidencias y evaluaci\'on de calidad para soportar decisiones de liberaci\'on y extensiones futuras (p.ej., simulador IoT y pruebas de desempe\~no).
 
 \section{Introducci\'on}
-AgroSense\_Tech es un sistema de an\'alisis para datos de sensores agr\'icolas construido con FastAPI, SQLAlchemy, PostgreSQL y un dashboard web (Plotly/HTML). El objetivo del proceso de prueba fue validar la adecuaci\'on funcional, fiabilidad, mantenibilidad y eficiencia del sistema, con \'enfasis en los flujos de ingesta, anal\'itica y visualizaci\'on.
+AgroSense\_Tech es un sistema de an\'alisis para datos de sensores agr\'icolas construido con FastAPI, SQLAlchemy, PostgreSQL (con fallback SQLite en pruebas) y un dashboard HTML. El objetivo del proceso de prueba fue validar adecuaci\'on funcional, fiabilidad, mantenibilidad y eficiencia, centrándose en flujos de ingesta, anal\'itica y visualizaci\'on.
 
-Este reporte adopta la metodolog\'ia y terminolog\'ia ISTQB, aplica el proceso definido por ISO/IEC 29119 e interpreta resultados con base en ISO/IEC 25010 (Modelo de Calidad de Producto/Servicio), asegurando trazabilidad, repetibilidad y reporte estandarizado.
+El reporte sigue una estructura estándar de ingeniería de pruebas: resumen ejecutivo, marco normativo, plan, estrategia, resultados y conclusiones. A continuación se presentan las definiciones normativas antes de su aplicación explícita.
 
-\section{Plan de Pruebas (seg\'un ISO/IEC 29119)}
+\section{Marco Normativo y Conceptual}
+\subsection{ISTQB}
+ISTQB (International Software Testing Qualifications Board) mantiene un cuerpo de conocimiento que estandariza principios (exhaustividad imposible, prueba depende del contexto, agrupaci\'on de defectos), niveles (unitaria, integraci\'on, sistema, aceptaci\'on), roles y técnicas (caja negra, caja blanca, basadas en experiencia, partición de equivalencia, análisis de valores límite). Proporciona terminología uniforme que reduce ambigüedad en diseño y reporte.
+\subsection{ISO/IEC 25010}
+Define el modelo de calidad de producto software en ocho características: adecuaci\'on funcional, eficiencia de rendimiento, compatibilidad, usabilidad, fiabilidad, seguridad, mantenibilidad y portabilidad. Cada característica puede desglosarse en subatributos (p. ej. mantenibilidad: modularidad, reusabilidad, analizabilidad, modificabilidad, testabilidad) y se evalúa mediante evidencia objetiva (métricas, resultados de pruebas, cobertura).
+\subsection{ISO/IEC 29119}
+Estándar internacional para procesos de prueba que estructura actividades en: planificación, monitoreo/control, análisis y diseño, implementación, ejecución y cierre. Define artefactos (plan, especificaciones de casos, procedimientos, informes), vocabulario y criterios de entrada/salida para asegurar repetibilidad y trazabilidad.
+\subsection{Aplicaci\'on en AgroSense Tech}
+La selección de pruebas unitarias sobre helpers y modelos respalda \textit{mantenibilidad} y \textit{fiabilidad} (ISO/IEC 25010) al detectar regresiones tempranas. Pruebas de integraci\'on sobre routers y base de datos validan \textit{adecuaci\'on funcional} y consistencia de datos. El flujo end-to-end garantiza que las métricas agregadas reflejan correctamente la ingesta (fiabilidad y adecuación). El uso de fixtures y separación en m\'odulos promueve \textit{modularidad} y \textit{testabilidad}. La cobertura del 91\% cuantifica soporte a la \textit{mantenibilidad}. El proceso seguido mapea a ISO/IEC 29119: (1) Plan (sección correspondiente), (2) Diseño (tabla de casos), (3) Implementación (scripts pytest y fixtures), (4) Ejecución (CI multi-versión), (5) Evaluación y cierre (sección de resultados y conclusiones). La terminología de niveles/técnicas utilizada proviene de ISTQB, facilitando comunicación clara y extensible.
+
+\section{Plan de Pruebas (ISO/IEC 29119)}
 \subsection{Tipos de pruebas aplicadas}
 Se ejecutaron los siguientes niveles/tipos:
 \begin{itemize}
@@ -68,8 +84,17 @@ Se ejecutaron los siguientes niveles/tipos:
 
 \subsection{Etapas y criterios de entrada/salida}
 Criterios de entrada:\\
+- Entorno de CI operativo con dependencias del sistema (libpq, gcc) y matrices de Python (3.11/3.12).\\
+- Variables de entorno y configuraci\'on de base de datos disponibles (.env/DATABASE\_URL, fallback a SQLite).\\
+- Suite de pruebas organizada y fixtures de cliente y sesi\'on de DB funcionales.
 
 Criterios de salida:\\
+- 100\% de los casos definidos ejecutados y pasados en el pipeline.\\
+- Cobertura total \textgreater= 80\% (lograda: 91\%).\\
+- Sin defectos cr\'iticos abiertos en rutas de valor (ingesta, anal\'itica, dashboard).
+
+\subsection{Entorno de pruebas}
+Las pruebas se ejecutaron sobre Ubuntu 22.04, Python 3.12, FastAPI 0.115, SQLAlchemy 2.0 y PostgreSQL 16. El pipeline CI utiliz\'o GitHub Actions con matrices Python 3.11 y 3.12, bajo entorno controlado con dependencias validadas.
 
 \subsection{Tabla resumen de casos de prueba}
 La Tabla~\ref{tab:plan} sintetiza el plan (fuente: tests\_report\_plan\_ES.md).
@@ -78,6 +103,7 @@ La Tabla~\ref{tab:plan} sintetiza el plan (fuente: tests\_report\_plan\_ES.md).
 \centering
 \caption{Resumen de Casos de Prueba} \label{tab:plan}
 \small
+\begin{adjustbox}{max width=\textwidth}
 \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.2cm} X >{\raggedright\arraybackslash}p{3.2cm} >{\raggedright\arraybackslash}p{2.2cm}}
 \toprule
 \textbf{ID} & \textbf{Nombre de la Prueba} & \textbf{Tipo} & \textbf{Estado} \\
@@ -101,9 +127,12 @@ CP-COV-02 & Add coverage for database helpers & Calidad & Completada (database.p
 CP-COV-03 & Add coverage for sensor\_simulator script & Calidad & Pendiente \\
 \bottomrule
 \end{tabularx}
+\end{adjustbox}
 \end{table*}
 
-\section{Estrategia de Pruebas (seg\'un ISTQB)}
+\FloatBarrier
+
+\section{Estrategia de Pruebas (ISTQB)}
 La estrategia combin\'o t\'ecnicas de caja negra, caja blanca y basadas en requisitos:
 \begin{itemize}
   \item Caja negra: validaci\'on de endpoints REST (ingesta, anal\'iticas, dashboard JSON/HTML) con partici\'on de equivalencia y valores l\'imite.
@@ -112,16 +141,29 @@ La estrategia combin\'o t\'ecnicas de caja negra, caja blanca y basadas en requi
 \end{itemize}
 La selecci\'on se ajusta a la arquitectura: FastAPI para la capa de presentaci\'on/servicios, SQLAlchemy para ORM, PostgreSQL como base transaccional (con fallback SQLite) y Plotly/HTML para visualizaci\'on. Las fixtures de \textit{pytest} (cliente y sesi\'on de BD) permiten pruebas aisladas y repetibles.
 
-\section{Resultados y Cobertura (seg\'un ISO/IEC 25010)}
-Cobertura total alcanzada: \textbf{91\%}. Se ejecutaron \textbf{26} pruebas exitosamente sin fallos cr\'iticos. A continuaci\'on, una s\'intesis por m\'odulo:
+\section{Pipeline CI/CD en GitHub Actions}
+El flujo de Integraci\'on Continua (CI) se implementa en GitHub Actions usando una matriz de versiones de Python (3.11 y 3.12). Las fases principales incluyen: (1) instalaci\'on de dependencias (FastAPI, SQLAlchemy, drivers de BD, pytest y coverage), (2) ejecuci\'on de pruebas con \texttt{pytest --cov=.}, (3) c\'alculo y agregaci\'on de cobertura (HTML/XML) y (4) publicaci\'on opcional de artefactos (reporte HTML de cobertura y logs). Condiciones de paso: todas las pruebas deben finalizar sin fallos cr\'iticos y una cobertura global \(\geq 80\%\). Beneficios: detecci\'on temprana de regresiones, reproducibilidad en entornos limpios, evidencia de proceso seg\'un ISO/IEC 29119 y soporte a fiabilidad y mantenibilidad (ISO/IEC 25010).
 
-\begin{table}[h]
+\section{Aplicaci\'on del modelo ISO/IEC 25010 en el proyecto}
+\begin{itemize}
+  \item \textbf{Adecuaci\'on funcional}: Endpoints de ingesta (POST /sensor-data), anal\'itica (GET /analytics) y dashboard (GET /dashboard/view) validados por CP-SENS, CP-AN, CP-DB y CP-E2E; confirman cobertura de funciones clave y resultados esperados.
+  \item \textbf{Fiabilidad}: 26 pruebas sin fallos cr\'iticos; casos de vac\'io (CP-PROC-02, CP-DB-02) y consistencia de c\'alculos verifican comportamiento estable ante bordes.
+  \item \textbf{Mantenibilidad}: Arquitectura modular (routers, modelos, capa BD), alta cobertura (91\%), fixtures reutilizables y CI frecuente mejoran analizabilidad/testabilidad y reducen costo de cambio.
+  \item \textbf{Eficiencia de rendimiento}: A\'un sin pruebas de carga, las rutas realizan operaciones simples (agregaciones y render ligero); base lista para incluir perfiles y monitoreo en simulador IoT.
+  \item \textbf{Compatibilidad}: Interfaces REST est\'andar y JSON; integraciones internas (routers+BD) ejercitadas en pruebas de integraci\'on, facilitando clientes externos.
+  \item \textbf{Usabilidad}: Dashboard HTML validado (CP-DB-01/02) para estados normales y vac\'ios; presenta m\'etricas agregadas de forma legible para usuario t\'ecnico.
+  \item \textbf{Seguridad}: Enfoque inicial en validaciones de entrada mediante modelos; preparado para incorporar autenticaci\'on/autorizaci\'on y pruebas negativas en ciclo siguiente.
+  \item \textbf{Portabilidad}: FastAPI + SQLAlchemy independiza del motor (PostgreSQL/SQLite); configuraci\'on por entorno permite despliegue multi-plataforma.
+\end{itemize}
+
+\subsection*{M\'etricas de Cobertura por M\'odulo}
+\begin{table}[H]
 \centering
 \caption{M\'etricas de Cobertura por M\'odulo}
 \small
 \begin{tabular}{lcc}
-\toprule
-\textbf{M\'odulo} & \textbf{Cobertura} & \textbf{Tipo de Pruebas} \\
+	\toprule
+	\textbf{M\'odulo} & \textbf{Cobertura} & \textbf{Tipo de Pruebas} \\
 \midrule
 models.py & 100\% & Unitarias \\
 database.py & 88\% & Unitarias \\
@@ -132,15 +174,33 @@ main.py & 91\% & Sistema \\
 \end{tabular}
 \end{table}
 
-Interpretaci\'on por atributos de calidad (ISO/IEC 25010):\\
-\textbf{Fiabilidad}: alta; sin fallos cr\'iticos en flujos principales y verificaci\'on de consistencia de anal\'iticas.\\
-\textbf{Mantenibilidad}: alta; arquitectura modular (routers, modelos, esquemas), pruebas enfocadas y fixtures reutilizables, integraci\'on continua con agregaci\'on de cobertura.\\
-\textbf{Eficiencia y adecuaci\'on funcional}: comprobadas por 26 pruebas exitosas, con validaci\'on de endpoints y render del dashboard.
+\FloatBarrier
+
+\section{Resultados y Cobertura}
+Cobertura global consolidada: \textbf{91\%} sobre 26 pruebas sin fallos cr\'iticos. La ausencia de errores en ingesta, procesamiento y visualizaci\'on valida la fiabilidad en el alcance actual. La diversidad de niveles (unitaria, integraci\'on, sistema) demuestra profundidad y apoya decisiones para extender a pruebas no funcionales (rendimiento, seguridad) en ciclos siguientes.
 
 \section{Conclusiones}
 El proyecto cumple con los lineamientos de calidad de ISO/IEC 25010 y el proceso de pruebas de ISO/IEC 29119, aplicando una estrategia ISTQB que valid\'o las funcionalidades cr\'iticas de ingesta, anal\'itica y visualizaci\'on. Se alcanz\'o una cobertura superior al 80\% (91\% global), con evidencias de fiabilidad y mantenibilidad.
 
-Elementos pendientes para ciclos posteriores: (i) pruebas del simulador IoT, actualmente marcadas como \textit{Pendiente}; (ii) pruebas de desempe\~no/estr\'es y umbrales de cobertura en CI; (iii) posible integraci\'on con servicios de reporte de cobertura (Codecov/Coveralls) y/o migraciones de esquema (Alembic) para gesti\'on de cambios.
+Elementos pendientes para ciclos posteriores: (i) pruebas del simulador IoT, actualmente marcadas como \textit{Pendiente}; (ii) pruebas de desempe\~no/estr\'es y umbrales de cobertura en CI; (iii) integraci\'on con servicios de reporte de cobertura (Codecov/Coveralls) y/o migraciones de esquema (Alembic) para gesti\'on de cambios.
+
+\section{Mejoras propuestas}
+Con base en ISO/IEC 29119 e incrementando la madurez del proceso se proponen:
+\begin{itemize}
+  \item \textbf{Pruebas de estr\'es y carga}: Simular ráfagas de ingest\'on desde un simulador IoT para medir tiempos de respuesta, colas y uso de recursos.
+  \item \textbf{Automatizaci\'on avanzada}: Pruebas de contrato y escenarios parametrizados para endpoints y consultas, ampliando cobertura de bordes.
+  \item \textbf{Integraci\'on con Codecov}: Publicar tendencia de cobertura, fijar umbrales crecientes (91\% \rightarrow 95\%) y proteger ramas.
+  \item \textbf{Monitoreo del simulador IoT}: M\'etricas de salud (latencia, tasa de eventos procesados) y alertas para regresiones.
+  \item \textbf{Seguridad}: Incorporar autenticaci\'on por token y pruebas de autorizaci\'on negativas (respuestas 401/403).
+  \item \textbf{Pruebas de aceptaci\'on}: Criterios de usuario final para el dashboard (claridad, tiempos de carga) y endpoints clave.
+\end{itemize}
+
+\section{Evidencias}
+\begin{itemize}
+\item Reporte HTML de cobertura (\texttt{htmlcov/index.html}).
+\item Capturas de ejecuci\'on de pruebas (\texttt{pytest --cov=.}).
+\item Diagrama de arquitectura (\texttt{docs/diagrama\_arquitectura.mmd} exportado a PNG).
+\end{itemize}
 
 \section*{Referencias}
 \begin{thebibliography}{00}
@@ -153,148 +213,3 @@ Elementos pendientes para ciclos posteriores: (i) pruebas del simulador IoT, act
 \end{thebibliography}
 
 \end{document}
-=======
-\documentclass[conference]{IEEEtran}
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
-\usepackage[spanish,english]{babel}
-\usepackage{hyperref}
-\usepackage{booktabs}
-\usepackage{longtable}
-\usepackage{array}
-\usepackage{graphicx}
-\usepackage{enumitem}
-\usepackage{xcolor}
-
-% IEEE recommends hyphenation and micro-typography tweaks if available
-\hypersetup{
-  colorlinks=true,
-  linkcolor=blue,
-  citecolor=blue,
-  urlcolor=blue
-}
-
-\begin{document}
-
-\title{Reporte Técnico de Pruebas de Software del Proyecto AgroSense_Tech}
-
-\author{\IEEEauthorblockN{Alejandro Ramos Echeverry}\
-\IEEEauthorblockA{Universidad San Buenaventura, Bello — Ingeniería de Datos y Software}}
-
-\maketitle
-
-% Abstract in English
-\selectlanguage{english}
-\begin{abstract}
-This report presents the software testing outcomes for the AgroSense_Tech project, following ISTQB-aligned practices and the ISO/IEC 29119 test process, and interpreting results under the ISO/IEC 25010 quality model. The scope covers unit, integration, system, and acceptance perspectives on a FastAPI-based IoT analytics service with SQLAlchemy persistence and HTML dashboards. Test planning was driven by requirements-based and equivalence partitioning techniques complemented by white-box checks for core data processing. The current test suite achieves an overall code coverage of 91% across main modules (models, database, routers, and application entry point), with 26 successful tests validating critical functionality. Quality attributes assessed include functional suitability, reliability, efficiency, and maintainability, showing no critical failures and a modular design conducive to maintenance. Pending work includes IoT simulator expansion and stress/performance testing.
-\end{abstract}
-
-% Resumen en español
-\selectlanguage{spanish}
-\section*{Resumen}
-Este reporte presenta los resultados del proceso de pruebas del proyecto AgroSense_Tech, aplicando la metodología ISTQB y el proceso de pruebas de ISO/IEC 29119, e interpretando los hallazgos bajo el modelo de calidad ISO/IEC 25010. El alcance cubre pruebas unitarias, de integración, de sistema y de aceptación sobre un servicio IoT analítico basado en FastAPI, con persistencia mediante SQLAlchemy y panel HTML. El plan se guió por técnicas basadas en requisitos y partición de equivalencia, complementadas con verificación de caja blanca para el procesamiento de datos. La suite actual alcanza una cobertura total del 91% en los módulos clave (modelos, base de datos, routers y punto de entrada), con 26 pruebas exitosas que validan funcionalidades críticas. Los atributos de calidad evaluados incluyen adecuación funcional, fiabilidad, eficiencia y mantenibilidad, sin fallos críticos y con diseño modular mantenible. Quedan pendientes la ampliación del simulador IoT y las pruebas de estrés/rendimiento.
-
-\section{Introducción}
-AgroSense_Tech es una aplicación orientada al ámbito IoT agrícola para ingestión, almacenamiento, análisis y visualización de datos de sensores. La arquitectura está implementada con FastAPI, SQLAlchemy y plantillas HTML (Jinja2) para el tablero; la persistencia por defecto utiliza SQLite con soporte opcional para PostgreSQL. Este documento describe el proceso y los resultados de pruebas conforme a ISTQB, adoptando el marco de proceso de ISO/IEC 29119 y evaluando la calidad conforme al modelo ISO/IEC 25010.
-
-Los objetivos del proceso de prueba son: (i) verificar la adecuación funcional de los endpoints y del tablero, (ii) validar la fiabilidad del procesamiento analítico, (iii) constatar mantenibilidad a través de una estructura modular y uso de fixtures, y (iv) evidenciar la eficiencia y consistencia del flujo de datos de extremo a extremo.
-
-\section{Plan de Pruebas (ISO/IEC 29119)}
-\subsection{Tipos y niveles de prueba}
-Se aplicaron los siguientes tipos y niveles:
-\begin{itemize}[leftmargin=*,nosep]
-  \item Pruebas unitarias: funciones internas y validaciones de modelos.
-  \item Pruebas de integración: interacción entre routers (APIs) y capa de datos.
-  \item Pruebas de sistema: validación end-to-end de ingestión y analítica, incluyendo el dashboard HTML.
-  \item Pruebas de aceptación: verificación funcional del tablero y endpoints desde la perspectiva del usuario objetivo.
-\end{itemize}
-
-\subsection{Criterios de entrada y salida}
-\textbf{Entrada:} código principal estable (\texttt{main.py}, \texttt{routers/}, \texttt{database.py}, \texttt{models.py}), conjunto de pruebas definido (\texttt{tests/}) y plan documentado (\texttt{tests/tests_report_plan_ES.md}).\\
-\textbf{Salida:} ejecución exitosa de las pruebas automatizadas, cobertura global \(\geq 80\%\), ausencia de fallos críticos en rutas públicas y tablero, y documentación del resultado.
-
-\subsection{Resumen de Casos de Prueba}
-La Tabla~\ref{tab:resumen-casos} resume los casos de prueba según \texttt{tests/tests_report_plan_ES.md}.
-
-\begin{longtable}{@{}p{2.2cm} p{5.1cm} p{3.0cm} p{2.2cm}@{}}
-\caption{Resumen de casos de prueba}\label{tab:resumen-casos}\\
-\toprule
-\textbf{ID} & \textbf{Nombre de la Prueba} & \textbf{Tipo} & \textbf{Estado}\\
-\midrule
-\endfirsthead
-\toprule
-\textbf{ID} & \textbf{Nombre de la Prueba} & \textbf{Tipo} & \textbf{Estado}\\
-\midrule
-\endhead
-CP-SENS-01 & test_sensor_data_post_valid & Prueba Unitaria & Completada\\
-CP-SENS-02 & test_sensor_data_post_invalid & Prueba Unitaria & Completada\\
-CP-PROC-01 & test_process_data_correctness & Prueba Unitaria & Completada\\
-CP-PROC-02 & test_process_data_empty & Prueba Unitaria & Completada\\
-CP-AN-01 & test_analytics_endpoint_consistency & Prueba de Integración & Completada\\
-CP-DB-01 & test_dashboard_load & Prueba de Integración & Completada\\
-CP-DB-02 & test_dashboard_empty_state & Prueba de Integración & Completada\\
-CP-E2E-01 & test_end_to_end_ingest_and_metrics & Prueba de Sistema & Completada\\
-CP-LEG-01 & test_placeholder_cleanup (analytics legacy) & Legado & Conservado\\
-CP-LEG-02 & test_placeholder_cleanup_dashboard & Legado & Conservado\\
-CP-LEG-03 & test_placeholder_cleanup_sensor & Legado & Conservado\\
-CP-LEG-04 & test_placeholder_cleanup_sensors_dup & Legado & Conservado\\
-CP-FIX-01 & client fixture available & Fixture de Pruebas & Completada\\
-CP-FIX-02 & db_session fixture cleanup & Fixture de Pruebas & Completada\\
-CP-COV-01 & Coverage \(\geq\) 80\% core modules & Calidad & Completada (91\% total)\\
-CP-COV-02 & Add coverage for database helpers & Calidad & Completada (database.py 88\%)\\
-CP-COV-03 & Add coverage for sensor_simulator script & Calidad & Pendiente\\
-\bottomrule
-\end{longtable}
-
-\section{Estrategia de Pruebas (ISTQB)}
-\subsection{Técnicas aplicadas}
-\textbf{Caja negra:} validación de endpoints REST (por ejemplo, \texttt{/analytics} y \texttt{/dashboard/view}) y del dashboard HTML, verificando respuestas, estructuras JSON y estados vacíos.\\
-\textbf{Caja blanca:} verificación de funciones internas de procesamiento, e.g., \texttt{process_data} en \texttt{routers/analytics.py}, cubriendo promedios, máximos y mínimos.\\
-\textbf{Basadas en requisitos:} casos trazados a requisitos funcionales de ingestión, agregación y visualización.\\
-\textbf{Partición de equivalencia y valores límite:} entradas válidas/ inválidas para lectura de sensores y estados vacíos.
-
-\subsection{Ajuste a la arquitectura}
-La arquitectura utiliza FastAPI para ruteo, SQLAlchemy para acceso a datos (SQLite por defecto y PostgreSQL opcional vía DSN), modelos Pydantic para I/O, y plantillas Jinja2 para el tablero (con potencial integración de bibliotecas de visualización como Plotly). La estrategia asegura cobertura transversal: módulos de datos (\texttt{models.py}, \texttt{database.py}), lógica de negocio en routers (\texttt{routers/}), y orquestación en \texttt{main.py}.
-
-\section{Resultados y Cobertura (ISO/IEC 25010)}
-\subsection{Cobertura y métricas}
-Cobertura total: \textbf{91\%}. La Tabla~\ref{tab:cobertura} resume la cobertura por módulo y el tipo de prueba predominante.
-
-\begin{table}[h]
-\centering
-\begin{tabular}{@{}l c l@{}}
-\toprule
-\textbf{Módulo} & \textbf{Cobertura} & \textbf{Tipo de Pruebas}\\
-\midrule
-\texttt{models.py} & 100\% & Unitarias\\
-\texttt{database.py} & 88\% & Unitarias\\
-\texttt{routers.analytics.py} & 100\% & Integración\\
-\texttt{routers.dashboard_html.py} & 89\% & Integración\\
-\texttt{main.py} & 91\% & Sistema\\
-\bottomrule
-\end{tabular}
-\caption{Cobertura por módulo y tipo de pruebas}
-\label{tab:cobertura}
-\end{table}
-
-\subsection{Interpretación por atributos de calidad}
-\textbf{Fiabilidad:} alta; sin fallos críticos detectados en rutas clave y procesamiento.\\
-\textbf{Mantenibilidad:} alta; diseño modular con fixtures (\texttt{tests/conftest.py}) y separación de responsabilidades.\\
-\textbf{Eficiencia y adecuación funcional:} verificada mediante 26 pruebas exitosas, incluyendo escenarios de datos vacíos y consistencia de métricas.\\
-\textbf{Compatibilidad y seguridad (observaciones):} pruebas no funcionales avanzadas (rendimiento/seguridad) quedan como trabajo futuro.
-
-\section{Conclusiones}
-El proyecto cumple con los principios de calidad del modelo ISO/IEC 25010 y sigue el proceso de pruebas de ISO/IEC 29119. La estrategia basada en ISTQB permitió validar todas las funcionalidades críticas, alcanzando una cobertura global del 91\%, superior al umbral del 80\% típico en entornos de validación. Como trabajo futuro se propone: (i) consolidar un simulador IoT para escenarios de carga realistas y (ii) ejecutar pruebas de estrés y rendimiento, además de ampliar casos de seguridad.
-
-\section{Referencias}
-\begin{thebibliography}{99}
-\bibitem{iso25010} ISO/IEC 25010:2011 — Systems and Software Quality Models.
-\bibitem{iso29119} ISO/IEC/IEEE 29119:2013 — Software Testing Standard.
-\bibitem{istqb} ISTQB Foundation Level Syllabus v4.0.
-\bibitem{fastapi} Documentación oficial de FastAPI: \url{https://fastapi.tiangolo.com/}.
-\bibitem{sqlalchemy} Documentación oficial de SQLAlchemy: \url{https://www.sqlalchemy.org/}.
-\bibitem{pytest} Documentación de pytest: \url{https://docs.pytest.org/}.
-\end{thebibliography}
-
-\end{document} 
->>>>>>> c37a637798c6ee389ae6e903e1af48f83ac4bd3d
